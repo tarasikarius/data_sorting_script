@@ -2,17 +2,23 @@
 
 namespace App\Command;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
-
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class GenerateDataFileCommand extends Command
 {
+    private $container;
+    
+    public function __construct(ContainerBuilder $container, $name = null)
+    {
+        $this->container = $container;
+
+        parent::__construct($name);
+    }
+
     protected function configure()
     {
         $this->setName('generate:data:file')
@@ -26,9 +32,8 @@ class GenerateDataFileCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $container = $this->getServiceContainer();
-        $dataGenerator = $container->get('data_generator');
-        
+        $dataGenerator = $this->container->get('data_generator');
+
         $filters = [
             'name' => $input->getOption('name'),
             'url' => $input->getOption('url'),
@@ -39,17 +44,5 @@ class GenerateDataFileCommand extends Command
 
         $output->writeln($result);
 
-    }
-
-    /**
-     * TODO: придумать более подходящее место для инициализации контейнера
-     */
-    private function getServiceContainer()
-    {
-        $container = new ContainerBuilder();
-        $loader = new PhpFileLoader($container, new FileLocator(__DIR__));
-        $loader->load('../../config/services.php');
-
-        return $container;
     }
 }
