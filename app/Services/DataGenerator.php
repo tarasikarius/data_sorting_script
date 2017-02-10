@@ -19,7 +19,7 @@ class DataGenerator
 
         switch ($format) {
             case 'sqlite':
-//                $newFile = $this->sqliteFileGenerate($filteredData);
+                $newFile = $this->sqliteFileGenerate($filteredData);
                 break;
             default:
                 $newFile = $this->jsonFileGenerate($filteredData);
@@ -81,6 +81,16 @@ class DataGenerator
     }
 
     /**
+     * @param $dir
+     */
+    private function createDirIfNotExists($dir)
+    {
+        if (!file_exists($dir)) {
+            mkdir($dir);
+        }
+    }
+
+    /**
      * @param $data
      * @return string
      */
@@ -97,20 +107,30 @@ class DataGenerator
     }
 
     /**
-     * @param $dir
+     * @param $data
+     * @return bool|string
      */
-    private function createDirIfNotExists($dir)
-    {
-        if (!file_exists($dir)) {
-            mkdir($dir);
-        }
-    }
-
     private function sqliteFileGenerate($data)
     {
+        $this->createDirIfNotExists(self::DATA_DIR . '/sqlite');
+        $fileName = self::DATA_DIR . '/sqlite/' . date('d.m.y-H_i_s') . '.db';
 
+        $db = new \SQLite3($fileName, SQLITE3_OPEN_CREATE | SQLITE3_OPEN_READWRITE);
+
+        if (!$db->exec('CREATE TABLE hotels (id integer, name varchar(50), url varchar(50), stars integer)')) {
+            return false;
+        }
+
+        foreach ($data as $item) {
+            $sql = "INSERT INTO hotels (name, url, stars) 
+                    VALUES('{$item['name']}', '{$item['url']}', {$item['stars']})
+             ";
+            $db->exec($sql);
+        }
+        
+        return $fileName;
     }
 
-    
+
 
 }
